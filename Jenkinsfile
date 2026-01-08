@@ -1,24 +1,45 @@
 pipeline {
     agent any
+    
+    environment {
+        DOCKER_IMAGE = "myapp:${env.BUILD_NUMBER}"
+        NEXUS_REPO = "your-nexus-repo-url/repository/maven-releases/"
+    }
 
     stages {
         stage('Checkout') {
             steps {
-                git branch: 'dev',
-                    url: 'https://github.com/poojithanavuluru-pc/jenkins_pipeline.git'
+                git branch: 'main', url: 'https://github.com/yourusername/your-repo.git'
             }
         }
 
-        stage('Build') {
+        stage('Build App') {
             steps {
-                echo 'Building application...'
+                // For Maven project
+                sh 'mvn clean package'
             }
         }
 
-        stage('Test') {
+        stage('Push to Nexus') {
             steps {
-                echo 'Running tests...'
+                // Only if you want to push artifacts
+                sh 'mvn deploy -DaltDeploymentRepository=nexus::default::${NEXUS_REPO}'
+            }
+        }
+
+        stage('Build Docker Image') {
+            steps {
+                script {
+                    docker.build(DOCKER_IMAGE, '.')
+                }
             }
         }
     }
+
+    post {
+        success {
+            echo "Docker image ${DOCKER_IMAGE} built successfully"
+        }
+    }
 }
+
