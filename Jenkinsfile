@@ -1,9 +1,8 @@
 pipeline {
     agent any
-    
+
     environment {
         DOCKER_IMAGE = "myapp:${env.BUILD_NUMBER}"
-        NEXUS_REPO = "your-nexus-repo-url/repository/maven-releases/"
     }
 
     stages {
@@ -15,15 +14,7 @@ pipeline {
 
         stage('Build App') {
             steps {
-                // For Maven project
                 sh 'mvn clean package'
-            }
-        }
-
-        stage('Push to Nexus') {
-            steps {
-                // Only if you want to push artifacts
-                sh 'mvn deploy -DaltDeploymentRepository=nexus::default::${NEXUS_REPO}'
             }
         }
 
@@ -34,12 +25,31 @@ pipeline {
                 }
             }
         }
+
+        stage('Run Docker Container') {
+            steps {
+                script {
+                    // Stop old container if exists
+                    sh "docker rm -f myapp_container || true"
+                    // Run new container
+                    sh "docker run -d --name myapp_container -p 8080:8080 ${DOCKER_IMAGE}"
+                }
+            }
+        }
+
+        stage('Deploy with Docker-Compose (Optional)') {
+            steps {
+                script {
+                    sh 'docker-compose down'
+                    sh 'docker-compose up -d --build'
+                }
+            }
+        }
     }
 
     post {
         success {
-            echo "Docker image ${DOCKER_IMAGE} built successfully"
+            echo "Pipeline executed successfully!"
         }
     }
 }
-
