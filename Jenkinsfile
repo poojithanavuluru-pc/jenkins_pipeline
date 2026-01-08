@@ -26,6 +26,19 @@ pipeline {
             }
         }
 
+        stage('Deploy with Docker-Compose') {
+    steps {
+        script {
+            // Stop old containers (if running)
+            sh 'docker-compose down'
+            
+            // Build and start containers in detached mode
+            sh 'docker-compose up -d --build'
+        }
+    }
+}
+
+
         stage('Run Docker Container') {
             steps {
                 script {
