@@ -50,6 +50,13 @@ pipeline {
             }
         }
 
+        stage('Copy JAR to Container') {
+    steps {
+        sh 'docker cp target/my-app.jar myapp_container:/app/my-app.jar'
+        sh 'docker restart myapp_container'
+    }
+}
+  
         stage('Deploy with Docker-Compose (Optional)') {
             steps {
                 script {
